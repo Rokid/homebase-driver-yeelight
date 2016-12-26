@@ -1,0 +1,23 @@
+{
+  "name": "driver-yeelight",
+  "main": "index.js",
+  "files": [
+    "lib",
+    "package.json",
+    "index.js"
+  ],
+  "dependencies": {
+    "node-ssdp": "^3.0.0-beta2"
+  },
+  "version": "1.0.0",
+  "description": "yeelight driver for rokid",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git@gitlab.rokid-inc.com:homebase/local-driver-yeelight.git"
+  },
+  "author": "",
+  "license": "ISC"
+}
