@@ -9,7 +9,7 @@
   "dependencies": {
     "node-ssdp": "^3.0.0-beta2"
   },
-  "version": "1.0.4",
+  "version": "1.0.5",
   "description": "yeelight driver for rokid",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
