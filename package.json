@@ -7,7 +7,7 @@
     "index.js"
   ],
   "dependencies": {
-    "node-ssdp": "^3.0.0-beta2"
+    "yeelight2": "^1.3.5"
   },
   "version": "1.0.5",
   "description": "yeelight driver for rokid",
