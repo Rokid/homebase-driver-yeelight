@@ -5,11 +5,18 @@
 // const transformToRDevice = require('./lib/transform').toRDevice;
 const Yeelight = require('yeelight2');
 
+const models = {
+  'mono': 'Yeelight 白光灯泡',
+  'desklamp': '米家台灯',
+  'color': 'Yeelight 彩光灯泡'
+};
+
 module.exports = function () {
 
   const lights = [];
 
-  const discover = Yeelight.discover(function(light){
+  const discover = Yeelight.discover(function(light, response) {
+    light.model = response.headers.model;
     lights.push(light);
   });
 
@@ -100,7 +107,8 @@ module.exports = function () {
 
 
 function transform(light) {
-  let actions, name, state;
+  let actions, name = models[light.model], state;
+
   switch(light.color_mode) {
     case '2':
       actions =  {
@@ -108,7 +116,7 @@ function transform(light) {
         brightness: ['num']
       };
 
-      name = light.name || '白光灯泡';
+      name = light.name || name || '白光灯';
       state = {
         switch: light.power,
         brightness: parseInt(light.bright)
@@ -120,7 +128,7 @@ function transform(light) {
         color: ['num']
       };
 
-      name = light.name || '白光灯泡';
+      name = light.name || name || '彩灯';
       state = {
         switch: light.power,
         color: parseInt(light.rgb)

@@ -1,13 +1,11 @@
 const Yeelight = require('yeelight2');
 
-const discover = Yeelight.discover(function(light){
+const discover = Yeelight.discover(function(light, response){
 
-  console.log(light.id);
   light.sync()
-    .then(console.log)
-    // .then(() => light.toggle());
-
-
+    .then(() => {
+      console.log(light.id, light.color_mode, light.name, light.connected, response.headers.model);
+    });
 
   setTimeout(search, 2000)
 
