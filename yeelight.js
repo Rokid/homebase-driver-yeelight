@@ -3,8 +3,9 @@ const Yeelight = require('yeelight2');
 const discover = Yeelight.discover(function(light, response){
 
   light.sync()
-    .then(() => {
-      console.log(light.id, light.color_mode, light.name, light.connected, response.headers.model);
+    .then((info) => {
+      console.log(response.headers.model);
+      console.log(info);
     });
 
   setTimeout(search, 2000)
@@ -12,6 +13,7 @@ const discover = Yeelight.discover(function(light, response){
 });
 
 function search() {
+  console.log('search wifi_bulb');
   discover.search('wifi_bulb');
 }
 

@@ -8,7 +8,8 @@ const Yeelight = require('yeelight2');
 const models = {
   'mono': 'Yeelight 白光灯泡',
   'desklamp': '米家台灯',
-  'color': 'Yeelight 彩光灯泡'
+  'color': 'Yeelight 彩光灯泡',
+  'stripe': 'Yeelight 灯带'
 };
 
 module.exports = function () {
@@ -17,6 +18,7 @@ module.exports = function () {
 
   const discover = Yeelight.discover(function(light, response) {
     light.model = response.headers.model;
+    light.supports = response.headers.support ? response.headers.support.split(' ') : [];
     lights.push(light);
   });
 
@@ -100,41 +102,29 @@ module.exports = function () {
 
     }
   }
-
-
 };
 
 
 
 function transform(light) {
-  let actions, name = models[light.model], state;
+  const name = light.name || models[light.model] || 'Yeelight 灯';
 
-  switch(light.color_mode) {
-    case '2':
-      actions =  {
-        switch: ['on', 'off'],
-        brightness: ['num']
-      };
+  const actions =  {
+    switch: ['on', 'off']
+  };
+  const state = {};
 
-      name = light.name || name || '白光灯';
-      state = {
-        switch: light.power,
-        brightness: parseInt(light.bright)
-      };
-      break;
-    case '1':
-      actions =  {
-        switch: ['on', 'off'],
-        color: ['num']
-      };
+  const isRGB = light.supports.indexOf('set_rgb') > -1;
 
-      name = light.name || name || '彩灯';
-      state = {
-        switch: light.power,
-        color: parseInt(light.rgb)
-      };
-      break;
+  if (isRGB) {
+    actions.color = ['num'];
+    state.color = parseInt(light.rgb, 10);
+  } else if (light.supports.indexOf('set_bright') > -1) {
+    actions.brightness = ['num'];
+    state.brightness = parseInt(light.bright, 10);
   }
+
+
   return {
     type: 'light',
     name: name,
