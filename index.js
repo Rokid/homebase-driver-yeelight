@@ -22,6 +22,14 @@ module.exports = function () {
     lights.push(light);
   });
 
+  setTimeout(() => {
+    discover.search('wifi_bulb');
+  }, 30000);
+
+  setInterval(() => {
+    discover.search('wifi_bulb');
+  }, 300000);
+
   function findLight(deviceId) {
     return lights.find(light => light.id === deviceId);
   }
@@ -39,24 +47,6 @@ module.exports = function () {
             .then(resolve, reject);
         }, 5000);
       });
-
-    },
-    /**
-     * @param device
-     * @param device.deviceId
-     * @param device.deviceInfo
-     * @param device.state
-     * @param device.userAuth
-     * @returns {PromiseLike<>|Promise.<>}
-     */
-    get(device) {
-      const light = findLight(device.deviceId);
-
-      if (!light) {
-        return Promise.reject(new Error('no light'));
-      } else {
-        return light.sync().then(() => transform(light))
-      }
     },
 
     /**
