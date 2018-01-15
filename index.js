@@ -79,12 +79,16 @@ module.exports = function () {
      * @return {Promise}
      */
     execute(device, action) {
-      const light = findLight(device.deviceId);
+      let light = findLight(device.deviceId);
 
       if (!light) {
         console.log('error when execute');
         lights.forEach(printLight);
-        return Promise.reject(new Error('no device'));
+        if (device.deviceInfo && device.deviceInfo.address) {
+          light = new Yeelight(device.deviceInfo.address, device.devicerInfo.port);
+        } else {
+          return Promise.reject(new Error('no device'));
+        }
       }
 
       if (action.property === 'color' && action.name === 'num') {
@@ -137,6 +141,10 @@ function transform(light) {
     type: 'light',
     name: name,
     deviceId: light.id,
+    deviceInfo: {
+      address: light.socket.remoteAddress,
+      port: light.socket.remotePort
+    },
     state: state,
     actions: actions
   }
