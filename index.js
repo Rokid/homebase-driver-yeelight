@@ -40,11 +40,7 @@ module.exports = function () {
 
   setTimeout(() => {
     discover.search('wifi_bulb');
-  }, 30000);
-
-  setInterval(() => {
-    discover.search('wifi_bulb');
-  }, 300000);
+  }, 5000);
 
   function findLight(deviceId) {
     return lights.find(light => light.id === deviceId);
