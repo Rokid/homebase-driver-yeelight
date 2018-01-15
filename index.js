@@ -4,6 +4,14 @@
 
 // const transformToRDevice = require('./lib/transform').toRDevice;
 const Yeelight = require('yeelight2');
+const Packet = require('ssdp2/packet.js');
+
+const parse = Packet.parse;
+
+Packet.parse = function(data) {
+  console.log(JSON.stringify(data.toString()));
+  return parse.call(Packet, data);
+}
 
 const models = {
   'mono': 'Yeelight 白光灯泡',
@@ -11,14 +19,22 @@ const models = {
   'color': 'Yeelight 彩光灯泡',
   'stripe': 'Yeelight 灯带'
 };
+function printLight(light) {
+  console.log('light', light.id);
+  console.log('  light address ', light.socket.remoteAddress);
+  console.log('  light model', light.model);
+}
 
 module.exports = function () {
 
   const lights = [];
 
+  console.info('yeelight start search new light');
   const discover = Yeelight.discover(function(light, response) {
     light.model = response.headers.model;
     light.supports = response.headers.support ? response.headers.support.split(' ') : [];
+    console.info('find new light');
+    printLight(light);
     lights.push(light);
   });
 
@@ -66,6 +82,8 @@ module.exports = function () {
       const light = findLight(device.deviceId);
 
       if (!light) {
+        console.log('error when execute');
+        lights.forEach(printLight);
         return Promise.reject(new Error('no device'));
       }
 
