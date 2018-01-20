@@ -19,6 +19,7 @@ const models = {
   'color': 'Yeelight 彩光灯泡',
   'stripe': 'Yeelight 灯带'
 };
+
 function printLight(light) {
   console.log('light', light.id);
   console.log('  light address ', light.socket.remoteAddress);
@@ -29,14 +30,23 @@ module.exports = function () {
 
   const lights = [];
 
-  console.info('yeelight start search new light');
-  const discover = Yeelight.discover(function(light, response) {
-    light.model = response.headers.model;
-    light.supports = response.headers.support ? response.headers.support.split(' ') : [];
+  function onNewLight(light, response) {
+    light.on('error', function (error) {
+      console.error('light error')
+      console.error(error);
+    });
+    if (response) {
+      light.model = response.headers.model;
+      light.supports = response.headers.support ? response.headers.support.split(' ') : [];
+    }
+
     console.info('find new light');
     printLight(light);
     lights.push(light);
-  });
+  }
+
+  console.info('yeelight start search new light');
+  const discover = Yeelight.discover(onNewLight);
 
   setTimeout(() => {
     discover.search('wifi_bulb');
@@ -80,8 +90,11 @@ module.exports = function () {
       if (!light) {
         console.log('error when execute');
         lights.forEach(printLight);
+        // 如果缓存里面没有， 那么使用deviceInfo里面的地址直接连接
         if (device.deviceInfo && device.deviceInfo.address) {
-          light = new Yeelight(device.deviceInfo.address, device.devicerInfo.port);
+          light = new Yeelight(device.deviceInfo.address, device.deviceInfo.port);
+          light.sync();
+          onNewLight(light);
         } else {
           return Promise.reject(new Error('no device'));
         }
