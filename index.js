@@ -9,7 +9,10 @@ const Packet = require('ssdp2/packet.js');
 const parse = Packet.parse;
 
 Packet.parse = function(data) {
-  console.log(JSON.stringify(data.toString()));
+  // console.log(JSON.stringify(data.toString()));
+  console.log('-----');
+  console.log(data && data.toString());
+  console.log('-----');
   return parse.call(Packet, data);
 }
 
@@ -28,12 +31,14 @@ function printLight(light) {
 
 module.exports = function () {
 
-  const lights = [];
+  let lights = [];
 
   function onNewLight(light, response) {
+    lights = lights.filter(l => l.id !== light.id)
     light.on('error', function (error) {
       console.error('light error')
       console.error(error);
+      lights = lights.filter(l => l !== light)
     });
     if (response) {
       light.model = response.headers.model;
@@ -54,6 +59,32 @@ module.exports = function () {
 
   function findLight(deviceId) {
     return lights.find(light => light.id === deviceId);
+  }
+
+  function execOnLight(light, action) {
+    if (action.property === 'color' && action.name === 'num') {
+      return light.set_rgb(action.value)
+        .then(() => light.sync())
+        .then(() => transform(light))
+        .then((device) => device.state)
+    }
+
+    if (action.property === 'brightness' && action.name === 'num') {
+      console.log('setbright', action.value)
+      return light.set_bright(action.value)
+        .then(() => light.sync())
+        .then(() => transform(light))
+        .then((device) => device.state)
+    }
+
+    if (action.property === 'switch') {
+      return light.set_power(action.name)
+        .then(() => light.sync())
+        .then(() => transform(light))
+        .then((device) => device.state)
+    }
+
+    return Promise.reject(new Error('not support action ' + JSON.stringify(action)))
   }
 
   return {
@@ -93,34 +124,19 @@ module.exports = function () {
         // 如果缓存里面没有， 那么使用deviceInfo里面的地址直接连接
         if (device.deviceInfo && device.deviceInfo.address) {
           light = new Yeelight(device.deviceInfo.address, device.deviceInfo.port);
-          light.sync();
-          onNewLight(light);
+          return new Promise(function(resolve, reject) {
+            const to = setTimeout(()=>{ reject(new Error('connect timeout error')) }, 3000);
+            light.on('connect', function(){
+              clearTimeout(to);
+              onNewLight(light);
+              resolve(execOnLight(light, action))
+            });
+          });
         } else {
           return Promise.reject(new Error('no device'));
         }
       }
-
-      if (action.property === 'color' && action.name === 'num') {
-        return light.set_rgb(action.value)
-          .then(() => light.sync())
-          .then(() => transform(light))
-          .then((device) => device.state)
-      }
-
-      if (action.property === 'brightness' && action.name === 'num') {
-        return light.set_bright(action.value)
-          .then(() => light.sync())
-          .then(() => transform(light))
-          .then((device) => device.state)
-      }
-
-      if (action.property === 'switch') {
-        return light.set_power(action.name)
-          .then(() => light.sync())
-          .then(() => transform(light))
-          .then((device) => device.state)
-      }
-
+      return execOnLight(light, action);
     }
   }
 };
@@ -134,9 +150,7 @@ function transform(light) {
     switch: ['on', 'off']
   };
   const state = {};
-
   const isRGB = light.supports.indexOf('set_rgb') > -1;
-
   if (isRGB) {
     actions.color = ['num'];
     state.color = parseInt(light.rgb, 10);
@@ -144,7 +158,6 @@ function transform(light) {
     actions.brightness = ['num'];
     state.brightness = parseInt(light.bright, 10);
   }
-
 
   return {
     type: 'light',
